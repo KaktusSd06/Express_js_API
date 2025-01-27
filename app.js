@@ -17,6 +17,9 @@ app.use('/warehouses', warehousesRouter);
 app.use('/items', itemsRouter);
 app.use('/movements', movementsRouter);
 
+// Підключення Swagger
+require('./swagger')(app);
+
 // Запуск сервера
 const port = 3000;
 app.listen(port, () => {
