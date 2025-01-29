@@ -19,7 +19,6 @@ const Item = require('../models/item');
  *           type: string
  *           description: The name of the warehouse
  *       example:
- *         id: d5fE_asz
  *         name: Main Warehouse
  */
 
@@ -93,9 +92,13 @@ const Item = require('../models/item');
  *         description: Some server error
  */
 router.post('/', async (req, res) => {
-  const newWarehouse = new Warehouse(req.body);
-  await newWarehouse.save();
-  res.send(newWarehouse);
+  try {
+    const newWarehouse = new Warehouse(req.body);
+    await newWarehouse.save();
+    res.status(201).send(newWarehouse);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to create warehouse' });
+  }
 });
 
 /**
@@ -130,8 +133,15 @@ router.post('/', async (req, res) => {
  *         description: Some error happened
  */
 router.put('/:id', async (req, res) => {
-  const warehouse = await Warehouse.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.send(warehouse);
+  try {
+    const warehouse = await Warehouse.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!warehouse) {
+      return res.status(404).send({ message: 'Warehouse not found' });
+    }
+    res.send(warehouse);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to update warehouse' });
+  }
 });
 
 /**
@@ -156,8 +166,15 @@ router.put('/:id', async (req, res) => {
  *         description: Some error happened
  */
 router.delete('/:id', async (req, res) => {
-  await Warehouse.findByIdAndDelete(req.params.id);
-  res.send({ message: 'Warehouse deleted' });
+  try {
+    const warehouse = await Warehouse.findByIdAndDelete(req.params.id);
+    if (!warehouse) {
+      return res.status(404).send({ message: 'Warehouse not found' });
+    }
+    res.send({ message: 'Warehouse deleted' });
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to delete warehouse' });
+  }
 });
 
 /**
@@ -186,11 +203,15 @@ router.delete('/:id', async (req, res) => {
  *         description: Some error happened
  */
 router.get('/:id', async (req, res) => {
-  const warehouse = await Warehouse.findById(req.params.id);
-  if (!warehouse) {
-    return res.status(404).send('Warehouse not found');
+  try {
+    const warehouse = await Warehouse.findById(req.params.id);
+    if (!warehouse) {
+      return res.status(404).send({ message: 'Warehouse not found' });
+    }
+    res.send(warehouse);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to fetch warehouse' });
   }
-  res.send(warehouse);
 });
 
 /**
@@ -212,8 +233,12 @@ router.get('/:id', async (req, res) => {
  *         description: Some error happened
  */
 router.get('/', async (req, res) => {
-  const warehouses = await Warehouse.find();
-  res.send(warehouses);
+  try {
+    const warehouses = await Warehouse.find();
+    res.send(warehouses);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to fetch warehouses' });
+  }
 });
 
 /**
@@ -242,16 +267,20 @@ router.get('/', async (req, res) => {
  *         description: Some error happened
  */
 router.get('/:id/items', async (req, res) => {
-  const warehouseId = req.params.id;
-  const warehouse = await Warehouse.findById(warehouseId);
-  if (!warehouse) {
-    return res.status(404).send('Warehouse not found');
+  try {
+    const warehouseId = req.params.id;
+    const warehouse = await Warehouse.findById(warehouseId);
+    if (!warehouse) {
+      return res.status(404).send({ message: 'Warehouse not found' });
+    }
+    const items = await Item.find({ warehouse: warehouseId }).select('name quantity');
+    res.send({
+      warehouse,
+      items
+    });
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to fetch warehouse items' });
   }
-  const items = await Item.find({ warehouse: warehouseId }).select('name quantity');
-  res.send({
-    warehouse,
-    items
-  });
 });
 
 module.exports = router;

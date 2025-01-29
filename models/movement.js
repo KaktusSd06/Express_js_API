@@ -6,8 +6,10 @@ const movementSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   fromWarehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
   toWarehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
-  type: String
+  type: String,
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // нове поле
 });
+
 
 const Movement = mongoose.model('Movement', movementSchema);
 

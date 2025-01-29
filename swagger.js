@@ -1,7 +1,6 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
-// Визначення опцій для swagger-jsdoc
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -10,7 +9,7 @@ const options = {
       version: '1.0.0',
     },
   },
-  apis: ['./routes/*.js'], // Шлях до файлів з анотаціями
+  apis: ['./routes/*.js'],
 };
 
 const specs = swaggerJsdoc(options);

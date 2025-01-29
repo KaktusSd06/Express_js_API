@@ -72,9 +72,13 @@ const Item = require('../models/item');
  *         description: Some server error
  */
 router.post('/', async (req, res) => {
-  const newItem = new Item(req.body);
-  await newItem.save();
-  res.send(newItem);
+  try {
+    const newItem = new Item(req.body);
+    await newItem.save();
+    res.status(201).send(newItem);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to create item' });
+  }
 });
 
 /**
@@ -109,8 +113,15 @@ router.post('/', async (req, res) => {
  *         description: Some error happened
  */
 router.put('/:id', async (req, res) => {
-  const item = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.send(item);
+  try {
+    const item = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!item) {
+      return res.status(404).send({ message: 'Item not found' });
+    }
+    res.send(item);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to update item' });
+  }
 });
 
 /**
@@ -135,8 +146,15 @@ router.put('/:id', async (req, res) => {
  *         description: Some error happened
  */
 router.delete('/:id', async (req, res) => {
-  await Item.findByIdAndDelete(req.params.id);
-  res.send({ message: 'Item deleted' });
+  try {
+    const item = await Item.findByIdAndDelete(req.params.id);
+    if (!item) {
+      return res.status(404).send({ message: 'Item not found' });
+    }
+    res.send({ message: 'Item deleted' });
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to delete item' });
+  }
 });
 
 /**
@@ -170,13 +188,17 @@ router.delete('/:id', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   const { category, name } = req.query;
-  const items = await Item.find({
-    $or: [
-      { category: new RegExp(category, 'i') },
-      { name: new RegExp(name, 'i') }
-    ]
-  }).populate('warehouse');
-  res.send(items);
+  try {
+    const items = await Item.find({
+      $or: [
+        { category: new RegExp(category, 'i') },
+        { name: new RegExp(name, 'i') }
+      ]
+    }).populate('warehouse');
+    res.send(items);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to fetch items' });
+  }
 });
 
 /**
@@ -205,11 +227,15 @@ router.get('/', async (req, res) => {
  *         description: Some error happened
  */
 router.get('/:id', async (req, res) => {
-  const item = await Item.findById(req.params.id).populate('warehouse');
-  if (!item) {
-    return res.status(404).send('Item not found');
+  try {
+    const item = await Item.findById(req.params.id).populate('warehouse');
+    if (!item) {
+      return res.status(404).send({ message: 'Item not found' });
+    }
+    res.send(item);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to fetch item' });
   }
-  res.send(item);
 });
 
 module.exports = router;

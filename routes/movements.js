@@ -82,79 +82,47 @@ const Item = require('../models/item');
 router.post('/transfer', async (req, res) => {
   const { itemId, quantity, fromWarehouse, toWarehouse } = req.body;
 
-  // Відняти кількість товару зі складу-відправника
-  const fromItem = await Item.findOne({ _id: itemId, warehouse: fromWarehouse });
-  if (!fromItem) {
-    return res.status(404).send('Item not found in the source warehouse');
-  }
-  if (fromItem.quantity < quantity) {
-    return res.status(400).send('Not enough quantity in the source warehouse');
-  }
-  fromItem.quantity -= quantity;
-  await fromItem.save();
+  try {
+    // Відняти кількість товару зі складу-відправника
+    const fromItem = await Item.findOne({ _id: itemId, warehouse: fromWarehouse });
+    if (!fromItem) {
+      return res.status(404).send({ message: 'Item not found in the source warehouse' });
+    }
+    if (fromItem.quantity < quantity) {
+      return res.status(400).send({ message: 'Not enough quantity in the source warehouse' });
+    }
+    fromItem.quantity -= quantity;
+    await fromItem.save();
 
-  // Додати або створити товар на складі-отримувачі
-  let toItem = await Item.findOne({ name: fromItem.name, warehouse: toWarehouse });
-  if (!toItem) {
-    toItem = new Item({
-      name: fromItem.name,
-      description: fromItem.description,
-      price: fromItem.price,
-      category: fromItem.category,
-      quantity: 0,
-      warehouse: toWarehouse
+    // Додати або створити товар на складі-отримувачі
+    let toItem = await Item.findOne({ name: fromItem.name, warehouse: toWarehouse });
+    if (!toItem) {
+      toItem = new Item({
+        name: fromItem.name,
+        description: fromItem.description,
+        price: fromItem.price,
+        category: fromItem.category,
+        quantity: 0,
+        warehouse: toWarehouse
+      });
+    }
+    toItem.quantity += quantity;
+    await toItem.save();
+
+    // Реєстрація переміщення
+    const newMovement = new Movement({
+      item: fromItem._id,
+      quantity,
+      fromWarehouse,
+      toWarehouse,
+      type: 'transfer'
     });
+
+    await newMovement.save();
+    res.status(201).send(newMovement);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to create movement' });
   }
-  toItem.quantity += quantity;
-  await toItem.save();
-
-  // Реєстрація переміщення
-  const newMovement = new Movement({
-    item: fromItem._id,
-    quantity,
-    fromWarehouse,
-    toWarehouse,
-    type: 'transfer'
-  });
-
-  await newMovement.save();
-  res.send(newMovement);
-});
-
-/**
- * @swagger
- * /movements/report/{warehouseId}:
- *   get:
- *     summary: Generate reports of item movements involving a specific warehouse
- *     tags: [Movements]
- *     parameters:
- *       - in: path
- *         name: warehouseId
- *         schema:
- *           type: string
- *         required: true
- *         description: The id of the warehouse
- *     responses:
- *       200:
- *         description: List of movements involving the warehouse
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Movement'
- *       500:
- *         description: Some error happened
- */
-router.get('/report/:warehouseId', async (req, res) => {
-  const { warehouseId } = req.params;
-  const movements = await Movement.find({
-    $or: [
-      { fromWarehouse: warehouseId },
-      { toWarehouse: warehouseId }
-    ]
-  }).populate('item fromWarehouse toWarehouse');
-  res.send(movements);
 });
 
 module.exports = router;

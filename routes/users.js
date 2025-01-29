@@ -67,10 +67,13 @@ const User = require('../models/user');
  */
 router.delete('/:id', async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
     res.send({ message: 'User deleted' });
   } catch (error) {
-    res.status(500).send('Server error');
+    res.status(500).send({ message: 'Server error, unable to delete user' });
   }
 });
 
