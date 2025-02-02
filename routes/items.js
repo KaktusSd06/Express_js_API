@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const Item = require('../models/item');
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const upload = multer({ storage });
 
 /**
  * @swagger
@@ -33,6 +45,9 @@ const Item = require('../models/item');
  *         warehouse:
  *           type: string
  *           description: The id of the warehouse where the item is stored
+ *         image:
+ *           type: string
+ *           description: The path to the image of the item
  *       example:
  *         name: Example Item
  *         description: This is an example item
@@ -40,6 +55,7 @@ const Item = require('../models/item');
  *         price: 10.50
  *         category: Example Category
  *         warehouse: 60b8d295f531123456789abc
+ *         image: uploads/example.jpg
  */
 
 /**
@@ -58,9 +74,25 @@ const Item = require('../models/item');
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Item'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               quantity:
+ *                 type: number
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               warehouse:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: The item was successfully created
@@ -71,9 +103,12 @@ const Item = require('../models/item');
  *       500:
  *         description: Some server error
  */
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   try {
-    const newItem = new Item(req.body);
+    const newItem = new Item({
+      ...req.body,
+      image: req.file ? req.file.path : ''
+    });
     await newItem.save();
     res.status(201).send(newItem);
   } catch (error) {
@@ -97,9 +132,25 @@ router.post('/', async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Item'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               quantity:
+ *                 type: number
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               warehouse:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: The item was updated
@@ -112,9 +163,13 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Some error happened
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', upload.single('image'), async (req, res) => {
   try {
-    const item = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedData = {
+      ...req.body,
+      image: req.file ? req.file.path : req.body.image
+    };
+    const item = await Item.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     if (!item) {
       return res.status(404).send({ message: 'Item not found' });
     }

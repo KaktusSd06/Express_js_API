@@ -15,6 +15,7 @@ const User = require('../models/user');
  *         - lastName
  *         - email
  *         - password
+ *         - warehouseId
  *       properties:
  *         id:
  *           type: string
@@ -31,11 +32,15 @@ const User = require('../models/user');
  *         password:
  *           type: string
  *           description: The user's password (hashed)
+ *         warehouseId:
+ *           type: string
+ *           description: The id of the user's warehouse
  *       example:
  *         firstName: John
  *         lastName: Doe
  *         email: john.doe@example.com
  *         password: $2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36nESa51fLbgHqknFbcwK7S
+ *         warehouseId: 60b8d295f531123456789def
  */
 
 /**
@@ -66,13 +71,13 @@ const User = require('../models/user');
  *         description: Server error
  */
 router.post('/register', async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, warehouseId } = req.body;
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).send({ message: 'Email already in use' });
     }
-    const newUser = new User({ firstName, lastName, email, password });
+    const newUser = new User({ firstName, lastName, email, password, warehouseId });
     await newUser.save();
     res.status(201).send({ message: 'User registered successfully' });
   } catch (error) {
@@ -113,6 +118,8 @@ router.post('/register', async (req, res) => {
  *                 token:
  *                   type: string
  *                   description: The JWT token
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Invalid email or password
  *       500:
@@ -130,7 +137,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).send({ message: 'Invalid email or password' });
     }
     const token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
-    res.status(200).json({ token });
+    res.status(200).json({ token, user });
   } catch (error) {
     res.status(500).send({ message: 'Server error, unable to login' });
   }

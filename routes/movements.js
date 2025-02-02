@@ -125,4 +125,70 @@ router.post('/transfer', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /movements/warehouse/{id}:
+ *   get:
+ *     summary: Get all movements by warehouse ID
+ *     tags: [Movements]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The warehouse ID
+ *     responses:
+ *       200:
+ *         description: The list of movements
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Movement'
+ *       404:
+ *         description: Movements not found
+ *       500:
+ *         description: Some server error
+ */
+router.get('/warehouse/:id', async (req, res) => {
+  try {
+    const movements = await Movement.find({ $or: [{ fromWarehouse: req.params.id }, { toWarehouse: req.params.id }] });
+    if (movements.length === 0) {
+      return res.status(404).send({ message: 'Movements not found' });
+    }
+    res.status(200).send(movements);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to retrieve movements' });
+  }
+});
+
+/**
+ * @swagger
+ * /movements:
+ *   get:
+ *     summary: Get all movements
+ *     tags: [Movements]
+ *     responses:
+ *       200:
+ *         description: The list of movements
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Movement'
+ *       500:
+ *         description: Some server error
+ */
+router.get('/', async (req, res) => {
+  try {
+    const movements = await Movement.find();
+    res.status(200).send(movements);
+  } catch (error) {
+    res.status(500).send({ message: 'Server error, unable to retrieve movements' });
+  }
+});
+
 module.exports = router;

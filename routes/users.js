@@ -30,7 +30,6 @@ const User = require('../models/user');
  *           type: string
  *           description: The user's password (hashed)
  *       example:
- *         id: 60b8d295f531123456789abc
  *         firstName: John
  *         lastName: Doe
  *         email: john.doe@example.com
