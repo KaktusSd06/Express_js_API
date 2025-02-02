@@ -11,6 +11,7 @@ const Item = require('../models/item');
  *       type: object
  *       required:
  *         - name
+ *         - adress
  *       properties:
  *         id:
  *           type: string
@@ -18,8 +19,12 @@ const Item = require('../models/item');
  *         name:
  *           type: string
  *           description: The name of the warehouse
+ *         adress:
+ *           type: string
+ *           description: The adress of the warehouse
  *       example:
  *         name: Main Warehouse
+ *         adress: Zarichanska 10/4
  */
 
 /**

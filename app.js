@@ -20,7 +20,7 @@ app.use('/warehouses', warehousesRouter);
 app.use('/items', itemsRouter);
 app.use('/movements', movementsRouter);
 app.use('/auth', authRouter);
-app.use('/users', auth, usersRouter); // Захищені маршрути для користувачів
+app.use('/users', auth, usersRouter);
 app.use('/requests', requestsRouter);
 
 require('./swagger')(app);
